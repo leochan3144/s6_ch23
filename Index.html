@@ -1,0 +1,1185 @@
+<title>Uses and Abuses of Statistics</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: survey-form workbook. Sticky tab strip, one ~900px column; every activity is a "form" panel whose answer options are questionnaire tick-boxes. Blue = 23.1 Uses, red = 23.2 Abuses. */
+:root{
+  --bg:#EDF1F5; --surface:#FFFFFF; --surface-2:#F4F6FA; --ink:#15203A; --muted:#566178; --line:#D3DAE4;
+  --accent:#2350B5; --accent-ink:#FFFFFF; --accent-soft:#E2E9FA;
+  --abuse:#B8391F; --abuse-soft:#FAE4DE;
+  --mark:#FFE16B;
+  --good:#127646; --good-soft:#DCF1E5; --bad:#B8391F; --bad-soft:#FAE4DE;
+  --sa:#2F6FD6; --sb:#DD842A;
+  --f-display:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif;
+  --f-body:"Atkinson Hyperlegible","Segoe UI",system-ui,-apple-system,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0F1522; --surface:#172033; --surface-2:#1D283D; --ink:#E6ECF5; --muted:#9DA9BD; --line:#2C3851;
+    --accent:#8AABF7; --accent-ink:#0F1522; --accent-soft:#22325A;
+    --abuse:#F28A72; --abuse-soft:#3E231D;
+    --mark:rgba(240,200,60,.36);
+    --good:#56CC8F; --good-soft:#16392A; --bad:#F28A72; --bad-soft:#3E231D;
+    --sa:#5F96F2; --sb:#F0A456;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0F1522; --surface:#172033; --surface-2:#1D283D; --ink:#E6ECF5; --muted:#9DA9BD; --line:#2C3851;
+  --accent:#8AABF7; --accent-ink:#0F1522; --accent-soft:#22325A;
+  --abuse:#F28A72; --abuse-soft:#3E231D;
+  --mark:rgba(240,200,60,.36);
+  --good:#56CC8F; --good-soft:#16392A; --bad:#F28A72; --bad-soft:#3E231D;
+  --sa:#5F96F2; --sb:#F0A456;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.wrap{max-width:920px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;line-height:1.15;margin:0}
+h1{font-size:clamp(2rem,6vw,3.2rem);font-weight:800;letter-spacing:-.02em}
+h2{font-size:clamp(1.5rem,4vw,2rem);font-weight:800;letter-spacing:-.01em}
+h3{font-size:1.2rem;font-weight:600}
+p{margin:0}
+.muted{color:var(--muted)}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+mark,.hl{background:linear-gradient(transparent 52%,var(--mark) 52%);color:inherit;padding:0 .1em}
+button{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px;border-radius:4px}
+
+/* Header */
+header.top{padding-block:28px 18px}
+.eyebrow{font-family:var(--f-mono);font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);font-weight:700}
+.top .sub{font-size:1.1rem;color:var(--muted);margin-top:8px;max-width:60ch}
+.progress{margin-top:18px;display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px}
+.ticks{display:flex;flex-wrap:wrap;gap:5px}
+.tick{width:20px;height:20px;border:2px solid var(--muted);border-radius:4px;display:grid;place-items:center;font-size:13px;line-height:1;color:var(--good);background:var(--surface)}
+.tick.done{border-color:var(--good);background:var(--good-soft)}
+.tick.done::after{content:"✓";font-weight:700}
+.progress .count{font-family:var(--f-mono);font-size:.9rem}
+.linkbtn{background:none;border:0;padding:0;color:var(--muted);text-decoration:underline;cursor:pointer;font-size:.88rem}
+
+/* Tabs */
+nav.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-bottom:1px solid var(--line)}
+.tabrow{display:flex;gap:4px;overflow-x:auto;scrollbar-width:thin}
+.tab{flex:0 0 auto;background:none;border:0;border-bottom:3px solid transparent;padding:12px 12px 10px;cursor:pointer;display:flex;align-items:baseline;gap:8px;color:var(--muted);white-space:nowrap}
+.tab .n{font-family:var(--f-mono);font-size:.8rem}
+.tab .lbl{font-weight:700}
+.tab .ct{font-family:var(--f-mono);font-size:.72rem;padding:1px 6px;border-radius:999px;background:var(--surface-2);border:1px solid var(--line)}
+.tab .ct.full{background:var(--good-soft);border-color:var(--good);color:var(--good)}
+.tab:hover{color:var(--ink)}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.tab.abuse[aria-selected="true"]{border-bottom-color:var(--abuse)}
+
+/* Sections */
+main{padding-block:28px 40px}
+section.view{display:flex;flex-direction:column;gap:22px}
+.sec-tag{display:inline-block;font-family:var(--f-mono);font-size:.75rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:2px 8px;border-radius:4px;background:var(--accent-soft);color:var(--accent);margin-bottom:8px}
+.is-abuse .sec-tag{background:var(--abuse-soft);color:var(--abuse)}
+.lede{font-size:1.15rem;max-width:62ch}
+.prose{display:flex;flex-direction:column;gap:10px;max-width:68ch}
+.block{display:flex;flex-direction:column;gap:12px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+.grid2>*,.grid3>*{min-width:0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:flex;flex-direction:column;gap:8px}
+.card h3{font-size:1.05rem}
+.card .k{font-family:var(--f-mono);font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.panel{background:var(--surface);border:1.5px solid var(--ink);border-radius:var(--r);padding:20px;display:flex;flex-direction:column;gap:14px;box-shadow:4px 4px 0 var(--line)}
+.panel-head{display:flex;flex-direction:column;gap:4px}
+.panel-label{font-family:var(--f-mono);font-size:.75rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.is-abuse .panel-label{color:var(--abuse)}
+.note{font-size:.92rem;color:var(--muted);border-top:1px dashed var(--line);padding-top:10px}
+
+/* Questionnaire mock */
+.qform{background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.qform .qq{font-weight:700}
+.qform .cbs{display:flex;flex-wrap:wrap;gap:4px 18px}
+.cb{display:inline-flex;align-items:center;gap:7px}
+.cb::before{content:"";width:13px;height:13px;border:1.5px solid var(--muted);border-radius:2px;flex:0 0 auto}
+.qform .blank{display:inline-block;min-width:70px;border-bottom:1.5px solid var(--muted);height:1em}
+
+/* Options (tick-box answers) */
+.opts{display:flex;flex-wrap:wrap;gap:8px}
+.opt{display:inline-flex;align-items:center;gap:10px;padding:8px 12px;border:1.5px solid var(--line);border-radius:8px;background:var(--surface);cursor:pointer;text-align:left;line-height:1.35}
+.opt:hover:not(:disabled){border-color:var(--accent)}
+.opt .box{width:18px;height:18px;border:2px solid var(--muted);border-radius:3px;flex:0 0 auto;display:grid;place-items:center;font-size:13px;font-weight:700;line-height:1}
+.opt.correct{border-color:var(--good);background:var(--good-soft)}
+.opt.correct .box{border-color:var(--good);color:var(--good)}
+.opt.correct .box::after{content:"✓"}
+.opt.wrong{border-color:var(--bad);background:var(--bad-soft)}
+.opt.wrong .box{border-color:var(--bad);color:var(--bad)}
+.opt.wrong .box::after{content:"✕"}
+.opt.picked{border-color:var(--accent);background:var(--accent-soft)}
+.opt.picked .box{border-color:var(--accent);background:var(--accent)}
+.opt:disabled{cursor:default}
+.opt.dim{opacity:.55}
+.crow{display:flex;flex-direction:column;gap:8px;padding-block:12px;border-top:1px solid var(--line)}
+.crow:first-child{border-top:0;padding-top:0}
+.crow-q{font-weight:700}
+.row-head{background:var(--surface-2);border-radius:8px;padding:10px 12px;margin-top:6px}
+.fb{font-size:.95rem;padding:10px 12px;border-radius:8px}
+.fb:empty{display:none}
+.fb.good{background:var(--good-soft)}
+.fb.good b{color:var(--good)}
+.fb.bad{background:var(--bad-soft)}
+.fb.bad b{color:var(--bad)}
+.scoreline{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px;font-family:var(--f-mono);font-size:.85rem;color:var(--muted)}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:9px 16px;border-radius:8px;border:1.5px solid var(--ink);background:var(--ink);color:var(--bg);font-weight:700;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--ink)}
+.btn:disabled{opacity:.45;cursor:default}
+
+/* Flow of stages */
+.flow{display:flex;align-items:stretch;gap:8px}
+.flow .stage{flex:1;min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:4px}
+.flow .stage .num{font-family:var(--f-mono);font-size:.78rem;color:var(--accent);font-weight:700}
+.flow .arrow{align-self:center;font-size:1.4rem;color:var(--muted)}
+@media (max-width:620px){.flow{flex-direction:column}.flow .arrow{transform:rotate(90deg)}}
+
+/* Toggles in question lab */
+.lab{display:flex;flex-direction:column;gap:12px;padding-block:14px;border-top:1px solid var(--line)}
+.lab:first-of-type{border-top:0;padding-top:0}
+.toggles{display:flex;flex-wrap:wrap;gap:10px 22px;align-items:center}
+.seg{display:inline-flex;align-items:center;gap:8px}
+.seg .lbl{font-weight:700;font-size:.95rem}
+.matrix{display:grid;grid-template-columns:auto 1fr 1fr;gap:6px;font-size:.92rem}
+.matrix .hd{font-family:var(--f-mono);font-size:.75rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);align-self:end;padding:2px 4px}
+.matrix .cell{background:var(--surface-2);border:1px dashed var(--line);border-radius:8px;min-height:54px;padding:8px;display:flex;flex-wrap:wrap;gap:6px;align-content:flex-start}
+.matrix .cell.best{border-style:solid;border-color:var(--good)}
+.chip{font-family:var(--f-mono);font-size:.8rem;font-weight:700;padding:3px 8px;border-radius:6px;background:var(--accent);color:var(--accent-ink)}
+.chip.ghost{background:transparent;color:var(--muted);border:1px dashed var(--line);font-weight:500}
+
+/* Principle cards */
+.pcard{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:flex;flex-direction:column;gap:10px}
+.pcard .pn{font-family:var(--f-mono);font-size:.75rem;color:var(--muted)}
+.pcard .tag{font-family:var(--f-mono);font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em}
+.pcard .tag.poor{color:var(--bad)}
+.pcard .tag.better{color:var(--good)}
+.pcard .why{font-size:.92rem;color:var(--muted)}
+
+/* Ordering */
+.order{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.order li{display:flex;align-items:center;gap:10px;background:var(--surface-2);border:1.5px solid var(--line);border-radius:8px;padding:8px 10px}
+.order li .pos{font-family:var(--f-mono);font-weight:700;width:1.5em;color:var(--muted)}
+.order li .t{flex:1;min-width:0}
+.order li.ok{border-color:var(--good);background:var(--good-soft)}
+.order li.no{border-color:var(--bad);background:var(--bad-soft)}
+.mv{width:34px;height:34px;border-radius:6px;border:1px solid var(--line);background:var(--surface);cursor:pointer}
+.mv:disabled{opacity:.35;cursor:default}
+
+/* Diagram */
+.diagram{overflow-x:auto}
+.diagram svg{display:block;width:100%;min-width:540px;height:auto}
+.diagram text{font-family:var(--f-body);fill:var(--ink)}
+
+/* Simulator */
+.methods{display:flex;flex-wrap:wrap;gap:8px}
+.mbtn{padding:8px 14px;border-radius:999px;border:1.5px solid var(--line);background:var(--surface);cursor:pointer;font-weight:700}
+.mbtn[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.simgrid{display:grid;grid-template-columns:repeat(40,1fr);gap:2px}
+@media (max-width:520px){.simgrid{gap:1px}}
+.px{aspect-ratio:1;border-radius:2px;opacity:.26;transition:transform .15s,opacity .15s}
+.px.m{background:var(--sa)}
+.px.f{background:var(--sb)}
+.px.sel{opacity:1;transform:scale(1.35);box-shadow:0 0 0 1.5px var(--ink);position:relative;z-index:1;border-radius:3px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:.88rem;color:var(--muted)}
+.legend .sw{display:inline-block;width:12px;height:12px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+.simstats{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.stat{background:var(--surface-2);border-radius:8px;padding:10px 12px}
+.stat .big{font-family:var(--f-mono);font-size:1.25rem;font-weight:700;font-variant-numeric:tabular-nums}
+.hist{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.hist span{font-family:var(--f-mono);font-size:.75rem;padding:2px 6px;border-radius:4px;background:var(--surface);border:1px solid var(--line)}
+.steps{margin:0;padding-left:1.3em;display:flex;flex-direction:column;gap:4px}
+.picklist{font-family:var(--f-mono);font-size:.8rem;color:var(--muted);word-break:break-word}
+
+/* Tables */
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.93rem}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--f-mono);font-size:.75rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:700;background:var(--surface-2)}
+tr:last-child td{border-bottom:0}
+td.grp{font-weight:700;white-space:nowrap}
+td.zh{white-space:nowrap}
+
+/* Bars */
+.bars{display:flex;flex-direction:column;gap:8px}
+.bar{display:grid;grid-template-columns:7.5em 1fr;gap:10px;align-items:center;font-size:.92rem}
+.bar .track{background:var(--surface-2);border-radius:4px;height:26px;position:relative}
+.bar .fill{height:100%;border-radius:4px;background:var(--accent);display:flex;align-items:center;justify-content:flex-end;padding-right:8px;color:var(--accent-ink);font-family:var(--f-mono);font-size:.8rem;font-weight:700;min-width:2.6em}
+.bar .fill.alt{background:var(--sb);color:#1b1206}
+
+/* Labs (sliders) */
+.ctrl{display:flex;flex-direction:column;gap:4px}
+.ctrl label{font-weight:700;font-size:.95rem}
+.ctrl .row{display:flex;align-items:center;gap:12px}
+.ctrl input[type=range]{flex:1;min-width:0;accent-color:var(--accent)}
+.ctrl output{font-family:var(--f-mono);font-weight:700;min-width:6.5em;text-align:right}
+.numin{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.numin label{display:flex;flex-direction:column;gap:4px;font-size:.88rem;font-weight:700}
+.numin input{font:inherit;font-family:var(--f-mono);padding:8px 10px;border:1.5px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);width:100%}
+.result{background:var(--surface-2);border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:6px}
+.work{font-family:var(--f-mono);font-size:.88rem;overflow-x:auto;white-space:nowrap}
+.verdict{font-weight:700}
+.verdict.t{color:var(--good)}
+.verdict.f{color:var(--bad)}
+
+/* Causal diagrams */
+.causal{display:flex;flex-wrap:wrap;align-items:center;gap:8px;justify-content:center;padding:14px;background:var(--surface-2);border-radius:8px}
+.node{background:var(--surface);border:1.5px solid var(--ink);border-radius:8px;padding:8px 12px;font-weight:700;text-align:center;max-width:15em}
+.node.c{border-style:dashed}
+.arr{font-size:1.3rem;color:var(--abuse);font-weight:700}
+.chart svg{width:100%;height:auto;display:block;max-width:560px}
+.chart text{font-family:var(--f-body);fill:var(--muted);font-size:12px}
+
+/* Quiz */
+.qcard{display:flex;flex-direction:column;gap:12px}
+.qmeta{display:flex;justify-content:space-between;font-family:var(--f-mono);font-size:.8rem;color:var(--muted)}
+.qbar{height:6px;background:var(--surface-2);border-radius:3px;overflow:hidden}
+.qbar>div{height:100%;background:var(--accent);transition:width .25s}
+.qtext{font-size:1.08rem;font-weight:700}
+.opts.col{flex-direction:column}
+.opts.col .opt{width:100%}
+.end{font-family:var(--f-display);font-size:2.2rem;font-weight:800}
+
+.wq{display:flex;flex-direction:column;gap:10px;padding-block:16px;border-top:1px solid var(--line)}
+.wq:first-of-type{border-top:0;padding-top:0}
+.wq textarea{font:inherit;width:100%;min-height:84px;padding:10px;border:1.5px solid var(--line);border-radius:8px;background:var(--surface-2);color:var(--ink);resize:vertical}
+.model{background:var(--good-soft);border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:6px}
+.model .work{white-space:normal}
+
+footer{padding-block:10px 40px}
+details.gloss{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 16px}
+details.gloss summary{cursor:pointer;font-weight:700;font-family:var(--f-display);font-size:1.1rem}
+details.gloss .tablewrap{margin-top:12px;border:0}
+.credit{font-size:.85rem;color:var(--muted);margin-top:14px}
+
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<header class="top">
+  <div class="wrap">
+    <p class="eyebrow">Chapter 23 · Sections 23.1 &amp; 23.2</p>
+    <h1>Uses and Abuses of Statistics</h1>
+    <p class="sub">How to plan a survey you can trust, and how to spot one that has gone wrong. Work through the tabs in order and tick off every activity.</p>
+    <div class="progress" aria-label="Your progress">
+      <div class="ticks" id="ticks"></div>
+      <span class="count" id="count">0 / 14 activities done</span>
+      <button class="linkbtn" id="resetBtn" type="button">Reset my progress</button>
+    </div>
+  </div>
+</header>
+
+<nav class="tabs" aria-label="Topics">
+  <div class="wrap tabrow" role="tablist" id="tabrow">
+    <button class="tab" role="tab" data-tab="survey" type="button"><span class="n">1</span><span class="lbl">Survey basics</span><span class="ct"></span></button>
+    <button class="tab" role="tab" data-tab="questionnaire" type="button"><span class="n">2</span><span class="lbl">Questionnaires</span><span class="ct"></span></button>
+    <button class="tab" role="tab" data-tab="sampling" type="button"><span class="n">3</span><span class="lbl">Population &amp; sample</span><span class="ct"></span></button>
+    <button class="tab" role="tab" data-tab="methods" type="button"><span class="n">4</span><span class="lbl">Sampling methods</span><span class="ct"></span></button>
+    <button class="tab abuse" role="tab" data-tab="abuses" type="button"><span class="n">5</span><span class="lbl">Abuses</span><span class="ct"></span></button>
+    <button class="tab" role="tab" data-tab="practice" type="button"><span class="n">6</span><span class="lbl">Practice</span><span class="ct"></span></button>
+  </div>
+</nav>
+
+<main>
+<div class="wrap">
+
+<!-- ============ 1. SURVEY BASICS ============ -->
+<section class="view" id="v-survey" data-view="survey">
+  <div>
+    <span class="sec-tag">23.1 Uses of statistics</span>
+    <h2>What is statistics for?</h2>
+  </div>
+  <p class="lede">Statistics is the science of <mark>collecting, organizing, presenting, analyzing and interpreting</mark> data. To find out about a group of people or objects, the most common method is a <b>statistical survey</b>.</p>
+  <div class="grid2">
+    <div class="card"><span class="k">Example</span><h3>Launching a new laptop</h3><p>A company collects data on what makes customers choose a laptop (price, weight, battery life…) before deciding how to promote its new model.</p></div>
+    <div class="card"><span class="k">Example</span><h3>Fewer visitors at a theme park</h3><p>The park studies customers' opinions about its facilities and service to find out why visitor numbers are falling.</p></div>
+  </div>
+
+  <div class="block">
+    <h3>The three stages of a statistical survey</h3>
+    <div class="flow">
+      <div class="stage"><span class="num">STAGE 1</span><b>Collecting data</b><span class="muted">Questionnaires, interviews, observation, experiments</span></div>
+      <span class="arrow" aria-hidden="true">→</span>
+      <div class="stage"><span class="num">STAGE 2</span><b>Organizing &amp; presenting data</b><span class="muted">Frequency tables, bar charts, pie charts, histograms</span></div>
+      <span class="arrow" aria-hidden="true">→</span>
+      <div class="stage"><span class="num">STAGE 3</span><b>Analyzing &amp; interpreting data</b><span class="muted">Means, medians, spotting trends, drawing conclusions</span></div>
+    </div>
+  </div>
+
+  <div class="panel" id="act-stages">
+    <div class="panel-head"><span class="panel-label">Try it · Which stage?</span><p>Tick the stage that each task belongs to.</p></div>
+    <div class="host"></div>
+  </div>
+
+  <div class="block">
+    <h3>After the survey: the statistical report</h3>
+    <p class="prose">When a survey is finished, the results are written up in a report. A report usually contains four parts, in a fixed order.</p>
+  </div>
+  <div class="panel" id="act-report">
+    <div class="panel-head"><span class="panel-label">Try it · Build the report</span><p>Use the arrows to put the four parts of a statistical report in the right order, then check.</p></div>
+    <div class="host"></div>
+  </div>
+</section>
+
+<!-- ============ 2. QUESTIONNAIRES ============ -->
+<section class="view" id="v-questionnaire" data-view="questionnaire" hidden>
+  <div>
+    <span class="sec-tag">23.1 Questionnaire design</span>
+    <h2>Writing questions you can trust</h2>
+  </div>
+  <p class="lede">A survey usually starts with a questionnaire written for a clear <b>objective</b>. Every question must be <mark>reliable</mark> and <mark>valid</mark>.</p>
+  <div class="grid2">
+    <div class="card"><span class="k">Reliability</span><h3>Are the replies consistent?</h3><p>Two people in the same situation should give the same answer. Subjective words such as <i>a lot</i>, <i>a large amount</i> or <i>often</i> mean different things to different people, so they make a question <b>unreliable</b>.</p></div>
+    <div class="card"><span class="k">Validity</span><h3>Does it measure the objective?</h3><p>The question must ask about exactly what the objective needs, and its options must cover every possible case. Otherwise it is <b>not valid</b>.</p></div>
+  </div>
+
+  <div class="panel" id="act-dinner">
+    <div class="panel-head">
+      <span class="panel-label">Try it · Question lab</span>
+      <p><b>Survey objective:</b> to find out the <span class="hl">weekly amount spent on dinner</span> by the students of a class. Judge each draft question, then check.</p>
+    </div>
+    <div class="host"></div>
+    <div>
+      <p class="muted" style="font-size:.9rem;margin-bottom:6px">Your results so far</p>
+      <div class="matrix" id="matrix">
+        <span></span><span class="hd">Valid</span><span class="hd">Not valid</span>
+        <span class="hd" style="align-self:center">Reliable</span><div class="cell best" data-c="11"></div><div class="cell" data-c="10"></div>
+        <span class="hd" style="align-self:center">Not reliable</span><div class="cell" data-c="01"></div><div class="cell" data-c="00"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="block">
+    <h3>Six principles for a good questionnaire</h3>
+    <p class="prose muted">Each card shows a poorly written question. Tap <b>Show better version</b> to see how to fix it.</p>
+    <div class="grid2" id="principles"></div>
+    <p class="note">Questions about embarrassing or sensitive issues are better placed at the <b>end</b> of a questionnaire.</p>
+  </div>
+
+  <div class="panel" id="act-flaw">
+    <div class="panel-head"><span class="panel-label">Try it · Spot the flaw</span><p>Each question breaks one principle. Which one?</p></div>
+    <div class="host"></div>
+  </div>
+
+  <div class="panel" id="act-library">
+    <div class="panel-head"><span class="panel-label">Check your skill · Students' use of the school library</span><p>Comment on the reliability and validity of each question. The suggested improvement appears when you answer correctly.</p></div>
+    <div class="host"></div>
+  </div>
+</section>
+
+<!-- ============ 3. POPULATION & SAMPLE ============ -->
+<section class="view" id="v-sampling" data-view="sampling" hidden>
+  <div>
+    <span class="sec-tag">23.1 Sampling</span>
+    <h2>Population, census and sample</h2>
+  </div>
+  <div class="grid2">
+    <div class="card"><span class="k">Population</span><p>The whole group of people or objects we want to study.</p></div>
+    <div class="card"><span class="k">Census</span><p>A survey that collects data from <b>all</b> units in the population.</p></div>
+    <div class="card"><span class="k">Sample</span><p>The units chosen from the population. The way we choose them is the <b>sampling method</b>.</p></div>
+    <div class="card"><span class="k">Sample survey</span><p>A survey that collects data from <b>some</b> units only. If the sample is chosen carefully, its results help us make inferences about the population.</p></div>
+  </div>
+
+  <div class="diagram" aria-label="Diagram: sampling takes a sample from the population; analysis of the sample gives statistical results, which are used to make inferences about the population.">
+    <svg viewBox="0 0 680 250" id="popsvg" role="img"></svg>
+  </div>
+
+  <div class="block">
+    <h3>Why don't we always take a census?</h3>
+    <div class="grid3">
+      <div class="card"><span class="k">Reason 1</span><h3>The population is huge</h3><p>Collecting every piece of data takes too much time and money, for example when studying the population density of the whole world.</p></div>
+      <div class="card"><span class="k">Reason 2</span><h3>Testing destroys the unit</h3><p>To check canned food you must open the can. An opened can cannot be sold, so testing every can leaves nothing to sell.</p></div>
+      <div class="card"><span class="k">Reason 3</span><h3>Some units can't be reached</h3><p>For example, people with drug addiction often hide it, so we cannot find all of them.</p></div>
+    </div>
+  </div>
+
+  <div class="panel" id="act-popsample">
+    <div class="panel-head"><span class="panel-label">Try it · Identify the population and the sample</span><p>Read each survey, then tick the population and the sample.</p></div>
+    <div class="host"></div>
+  </div>
+
+  <div class="panel" id="act-census">
+    <div class="panel-head"><span class="panel-label">Try it · Census or sample survey?</span><p>Ask yourself: is data collected from <i>every</i> unit in the population?</p></div>
+    <div class="host"></div>
+  </div>
+</section>
+
+<!-- ============ 4. SAMPLING METHODS ============ -->
+<section class="view" id="v-methods" data-view="methods" hidden>
+  <div>
+    <span class="sec-tag">23.1 Sampling methods</span>
+    <h2>How should we choose the sample?</h2>
+  </div>
+  <div class="grid2">
+    <div class="card"><span class="k">Type I</span><h3>Non-probability sampling</h3><p><b>Not every</b> unit in the population has a known chance of being selected.</p><p class="muted">Easy and cheap, and useful for finding people with special characteristics. But it depends on the researcher's judgement, so its results <b>cannot be evaluated objectively</b>.</p></div>
+    <div class="card"><span class="k">Type II</span><h3>Probability sampling</h3><p><b>Every</b> unit in the population has a <b>known and non-zero</b> chance of being selected.</p><p class="muted">Needed whenever we want to evaluate a sample objectively.</p></div>
+  </div>
+
+  <div class="block">
+    <h3>Three non-probability methods</h3>
+    <div class="grid3">
+      <div class="card"><span class="k">Convenience sampling</span><p>Choose units that are easy to reach.</p><p class="muted">To study bus waiting times, interview passengers at the nearest bus stop.</p></div>
+      <div class="card"><span class="k">Judgemental sampling</span><p>The researcher chooses units based on their own judgement.</p><p class="muted">To study the impact of COVID-19, a researcher judges tourism to be badly hit and interviews some airlines.</p></div>
+      <div class="card"><span class="k">Snowball sampling</span><p>People already interviewed refer more people.</p><p class="muted">To study discrimination against South Asians, each interviewee introduces more South Asians to interview.</p></div>
+    </div>
+    <p class="note">The names of these sampling methods are not required in the senior secondary curriculum, but you should know whether a method is probability or non-probability sampling.</p>
+  </div>
+
+  <div class="panel" id="act-sim">
+    <div class="panel-head">
+      <span class="panel-label">Try it · Sampling simulator</span>
+      <p>A researcher wants to interview <b>50</b> of <b>1000</b> customers: 600 males and 400 females. Choose a probability sampling method and run it. Run each method at least once.</p>
+    </div>
+    <div class="methods" role="group" aria-label="Sampling method">
+      <button class="mbtn" type="button" data-m="simple" aria-pressed="true">Simple random</button>
+      <button class="mbtn" type="button" data-m="systematic" aria-pressed="false">Systematic random</button>
+      <button class="mbtn" type="button" data-m="stratified" aria-pressed="false">Stratified random</button>
+    </div>
+    <div class="grid2" style="align-items:start">
+      <div><ol class="steps" id="simSteps"></ol></div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <button class="btn" id="simRun" type="button">Select 50 customers</button>
+        <div class="legend"><span><i class="sw" style="background:var(--sa)"></i>Male customer</span><span><i class="sw" style="background:var(--sb)"></i>Female customer</span><span><i class="sw" style="background:var(--ink)"></i>Outline = selected</span></div>
+      </div>
+    </div>
+    <p class="muted" id="simCaption" style="font-size:.88rem"></p>
+    <div class="simgrid" id="simGrid" aria-label="1000 customers, 40 per row"></div>
+    <div class="simstats">
+      <div class="stat"><div class="muted" style="font-size:.85rem">This sample</div><div class="big" id="simNow">—</div><div class="picklist" id="simPicks"></div></div>
+      <div class="stat"><div class="muted" style="font-size:.85rem">Males chosen in each run</div>
+        <div style="font-size:.85rem;margin-top:4px">Simple <span class="hist" id="h-simple"></span></div>
+        <div style="font-size:.85rem">Systematic <span class="hist" id="h-systematic"></span></div>
+        <div style="font-size:.85rem">Stratified <span class="hist" id="h-stratified"></span></div>
+      </div>
+    </div>
+    <p class="note">Run simple random sampling several times: the number of males changes from run to run. Stratified sampling always gives exactly 30 males and 20 females, matching the 60% : 40% split of the population.</p>
+  </div>
+
+  <div class="block">
+    <h3>Comparing the methods</h3>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Type</th><th>Method</th><th>Advantages</th><th>Disadvantages</th></tr></thead>
+        <tbody>
+          <tr><td class="grp" rowspan="3">Non-probability</td><td>Convenience</td><td>Low cost; easy to run; less time needed</td><td>Not objective</td></tr>
+          <tr><td>Judgemental</td><td>Low cost; easy to run; less time needed</td><td>Not objective</td></tr>
+          <tr><td>Snowball</td><td>Low cost; can reach rare cases</td><td>Not objective</td></tr>
+          <tr><td class="grp" rowspan="3">Probability</td><td>Simple random</td><td>Easy to run and to analyze the data</td><td>Expensive; tedious to draw a sample from a large population</td></tr>
+          <tr><td>Systematic random</td><td>Easier to run than simple random sampling</td><td>Not suitable if the units in the population are arranged in a certain order</td></tr>
+          <tr><td>Stratified random</td><td>Includes representatives from different groups in the population</td><td>Expensive; difficult to decide how to stratify</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="panel" id="act-classify">
+    <div class="panel-head"><span class="panel-label">Try it · Name that method</span><p>Tick the sampling method used. The first row of options is non-probability sampling, the second is probability sampling.</p></div>
+    <div class="host"></div>
+  </div>
+</section>
+
+<!-- ============ 5. ABUSES ============ -->
+<section class="view is-abuse" id="v-abuses" data-view="abuses" hidden>
+  <div>
+    <span class="sec-tag">23.2 Abuses of statistics</span>
+    <h2>When statistics mislead</h2>
+  </div>
+  <p class="lede">If any stage of a survey is badly designed, the result can be an <mark>abuse of statistics</mark>: a wrong or misleading conclusion. Abuses happen in two places: <b>sampling and data collection</b>, and <b>data analysis</b>.</p>
+
+  <div class="block">
+    <h3>A · Abuses in sampling and data collection</h3>
+    <p class="prose muted">I. Inappropriate sampling: the sample does not represent the population, so the results are <b>biased</b>.</p>
+    <div class="grid2">
+      <div class="card"><span class="k">Sample from a specific area</span><p>To study Internet use among the city's elderly, a team chooses elderly people from a <b>computer class</b> at a community centre.</p><p class="muted">People in a computer class are more likely to use the Internet often, so the result is biased.</p></div>
+      <div class="card"><span class="k">Self-selection</span><p>An <b>online poll</b> about political views is open to anyone who wants to vote.</p><p class="muted">Mostly people with strong opinions choose to take part, so the sample is not representative.</p></div>
+    </div>
+  </div>
+
+  <div class="panel" id="act-drama">
+    <div class="panel-head">
+      <span class="panel-label">II. Inappropriate questionnaire design · Anson vs Jessica</span>
+      <p><b>Objective:</b> to find out whether Japanese drama or Korean drama was more popular among their classmates <b>last weekend</b>.</p>
+    </div>
+    <div class="grid2">
+      <div class="block">
+        <b>Anson's questionnaire</b>
+        <div class="qform"><span class="qq">1. Did you watch Japanese drama last weekend?</span><span class="cbs"><span class="cb">Yes</span><span class="cb">No</span></span></div>
+        <div class="qform"><span class="qq">2. Did you watch Korean drama last weekend?</span><span class="cbs"><span class="cb">Yes</span><span class="cb">No</span></span></div>
+        <p class="muted" style="font-size:.88rem">Result: number of students who watched</p>
+        <div class="bars" id="barsA"></div>
+        <p>"Korean drama is more popular."</p>
+      </div>
+      <div class="block">
+        <b>Jessica's questionnaire</b>
+        <div class="qform"><span class="qq">1. How long did you watch Japanese drama last weekend?</span><span><span class="blank"></span> hours</span></div>
+        <div class="qform"><span class="qq">2. How long did you watch Korean drama last weekend?</span><span><span class="blank"></span> hours</span></div>
+        <p class="muted" style="font-size:.88rem">Result: total time spent watching</p>
+        <div class="bars" id="barsJ"></div>
+        <p>"Japanese drama is more popular."</p>
+      </div>
+    </div>
+    <div class="host"></div>
+  </div>
+
+  <div class="block">
+    <h3>B · Abuses in data analysis</h3>
+    <div class="grid3">
+      <div class="card"><span class="k">1</span><h3>Neglecting significant background information</h3></div>
+      <div class="card"><span class="k">2</span><h3>Using inappropriate statistical methods</h3></div>
+      <div class="card"><span class="k">3</span><h3>Drawing conclusions about causality too soon</h3></div>
+    </div>
+  </div>
+
+  <div class="panel" id="act-percent">
+    <div class="panel-head">
+      <span class="panel-label">Lab 1 · A higher percentage means more people?</span>
+      <p>Last month, <b>10%</b> of people in District A and <b>7%</b> of people in District B caught a flu. Someone claims: <i>"More people caught the flu in District A than in District B."</i></p>
+      <p><b>Challenge:</b> change the populations until the claim becomes false.</p>
+    </div>
+    <div class="ctrl"><label for="popA">Population of District A</label><div class="row"><input type="range" id="popA" min="50000" max="1000000" step="10000" value="300000"><output id="popAo" for="popA"></output></div></div>
+    <div class="ctrl"><label for="popB">Population of District B</label><div class="row"><input type="range" id="popB" min="50000" max="1000000" step="10000" value="300000"><output id="popBo" for="popB"></output></div></div>
+    <div class="result" aria-live="polite">
+      <div class="work" id="pctWork"></div>
+      <div class="verdict" id="pctVerdict"></div>
+    </div>
+    <p class="note">The background information that is missing is the <b>size of each population</b>. A percentage alone does not tell you the number of people.</p>
+  </div>
+
+  <div class="panel" id="lab-bundle">
+    <div class="panel-head">
+      <span class="panel-label">Lab 2 · Averaging percentages</span>
+      <p>A shop sells a school bag with a pencil case as a set. This year both prices go up. The shopkeeper takes the <b>average</b> of the two percentage increases and says the set is that much dearer. Change the numbers and compare.</p>
+    </div>
+    <div class="numin">
+      <label for="c1">Item 1 cost ($)<input id="c1" type="number" min="1" step="1" value="300"></label>
+      <label for="p1">Item 1 increase (%)<input id="p1" type="number" step="0.1" value="10"></label>
+      <label for="c2">Item 2 cost ($)<input id="c2" type="number" min="1" step="1" value="60"></label>
+      <label for="p2">Item 2 increase (%)<input id="p2" type="number" step="0.1" value="40"></label>
+    </div>
+    <div class="result" aria-live="polite">
+      <div><span class="muted">Shopkeeper's claim (simple average):</span> <span class="work" id="bNaive" style="display:inline"></span></div>
+      <div><span class="muted">Actual percentage increase of the set:</span></div>
+      <div class="work" id="bWork"></div>
+    </div>
+    <p class="note">Taking the average of the two percentages ignores that the items have different original costs. The correct method compares the total cost before and after.</p>
+  </div>
+
+  <div class="panel" id="lab-points">
+    <div class="panel-head">
+      <span class="panel-label">Lab 3 · Percentage points vs percentage change</span>
+      <p>A class's passing rate changes from test I to test II. Is the increase "10%"?</p>
+    </div>
+    <div class="ctrl"><label for="r1">Passing rate in test I</label><div class="row"><input type="range" id="r1" min="5" max="95" step="1" value="50"><output id="r1o" for="r1"></output></div></div>
+    <div class="ctrl"><label for="r2">Passing rate in test II</label><div class="row"><input type="range" id="r2" min="5" max="95" step="1" value="60"><output id="r2o" for="r2"></output></div></div>
+    <div class="result" aria-live="polite">
+      <div class="work" id="ptWork1"></div>
+      <div class="work" id="ptWork2"></div>
+    </div>
+    <p class="note">The difference between two rates is measured in <b>percentage points</b>. The <b>percentage change</b> divides that difference by the original rate.</p>
+  </div>
+
+  <div class="panel" id="act-causal">
+    <div class="panel-head">
+      <span class="panel-label">Lab 4 · Drawing conclusions about causality too soon</span>
+      <p>A study compares the time children spend playing computer games with the chance of being overweight. The researcher concludes: <i>"Playing computer games causes children to be overweight."</i></p>
+    </div>
+    <div class="chart" id="gameChart"></div>
+    <p>The graph shows that the two are <b>related</b>. Which theories could explain it? Tap each one.</p>
+    <div class="methods" role="group" aria-label="Possible explanations">
+      <button class="mbtn" type="button" data-c="0" aria-pressed="true">Games → overweight</button>
+      <button class="mbtn" type="button" data-c="1" aria-pressed="false">Overweight → games</button>
+      <button class="mbtn" type="button" data-c="2" aria-pressed="false">A common cause</button>
+    </div>
+    <div id="causalView"></div>
+    <p class="note">A graph shows a relationship, not a cause. Before concluding that one thing causes another, we need a theory that explains it and must rule out the other possible explanations.</p>
+    <div class="host"></div>
+  </div>
+</section>
+
+<!-- ============ 6. PRACTICE ============ -->
+<section class="view" id="v-practice" data-view="practice" hidden>
+  <div>
+    <span class="sec-tag">23.1 + 23.2 Practice</span>
+    <h2>Check what you know</h2>
+  </div>
+  <div class="panel" id="act-quiz">
+    <div class="panel-head"><span class="panel-label">Mixed quiz · 12 questions</span></div>
+    <div class="host"></div>
+  </div>
+  <div class="panel" id="act-written">
+    <div class="panel-head"><span class="panel-label">Written questions</span><p>Write your answer first, then compare it with the suggested answer. Your drafts stay on this device.</p></div>
+    <div class="host"></div>
+  </div>
+</section>
+
+</div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <details class="gloss">
+      <summary>Key terms (English · 中文)</summary>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>English</th><th>中文</th><th>Meaning</th></tr></thead>
+          <tbody id="gloss"></tbody>
+        </table>
+      </div>
+    </details>
+    <p class="credit">Chapter 23 · Uses and Abuses of Statistics. Practice questions written for this site to accompany the lesson slides and worksheets.</p>
+  </div>
+</footer>
+
+<script>
+(function(){
+"use strict";
+const $=(s,r=document)=>r.querySelector(s);
+const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
+const reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+function html(str){const t=document.createElement('template');t.innerHTML=str.trim();return t.content.firstElementChild;}
+function fmt(n){return Math.round(n).toLocaleString('en-US');}
+function r2(n){return (Math.round(n*100)/100).toString();}
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+const store={
+  get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v);}catch(e){return d;}},
+  set(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+};
+
+/* ---------- Progress ---------- */
+const ACTS=[
+  ['stages','survey','Which stage?'],['report','survey','Build the report'],
+  ['dinner','questionnaire','Question lab'],['flaw','questionnaire','Spot the flaw'],['library','questionnaire','Check your skill'],
+  ['popsample','sampling','Population and sample'],['census','sampling','Census or sample survey'],
+  ['sim','methods','Sampling simulator'],['classify','methods','Name that method'],
+  ['drama','abuses','Anson vs Jessica'],['percent','abuses','Percentage challenge'],['causal','abuses','Causality check'],
+  ['quiz','practice','Mixed quiz'],['written','practice','Written questions']
+];
+const PKEY='ch23-progress-v1';
+let done=new Set(store.get(PKEY,[]));
+function renderProgress(){
+  const t=$('#ticks');t.innerHTML='';
+  ACTS.forEach(([id,,name])=>{const s=document.createElement('span');s.className='tick'+(done.has(id)?' done':'');s.title=name+(done.has(id)?' (done)':'');t.append(s);});
+  $('#count').textContent=done.size+' / '+ACTS.length+' activities done';
+  $$('.tab').forEach(b=>{
+    const tab=b.dataset.tab;const all=ACTS.filter(a=>a[1]===tab);const d=all.filter(a=>done.has(a[0])).length;
+    const ct=$('.ct',b);ct.textContent=d+'/'+all.length;ct.classList.toggle('full',d===all.length);
+  });
+}
+function markDone(id){if(!done.has(id)){done.add(id);store.set(PKEY,[...done]);renderProgress();}}
+let resetArmed=false;
+$('#resetBtn').addEventListener('click',e=>{
+  if(!resetArmed){resetArmed=true;e.target.textContent='Click again to clear all ticks';setTimeout(()=>{resetArmed=false;e.target.textContent='Reset my progress';},4000);return;}
+  done=new Set();store.set(PKEY,[]);resetArmed=false;e.target.textContent='Progress cleared';renderProgress();
+  setTimeout(()=>{e.target.textContent='Reset my progress';},2000);
+});
+
+/* ---------- Tabs ---------- */
+const TABS=['survey','questionnaire','sampling','methods','abuses','practice'];
+function show(tab,scroll){
+  if(!TABS.includes(tab))tab='survey';
+  $$('.view').forEach(v=>v.hidden=v.dataset.view!==tab);
+  $$('.tab').forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===tab?'true':'false'));
+  store.set('ch23-tab',tab);
+  try{history.replaceState(null,'','#'+tab);}catch(e){}
+  if(scroll){const top=$('main').getBoundingClientRect().top+window.scrollY-60;if(window.scrollY>top)window.scrollTo({top:top,behavior:reduce?'auto':'smooth'});}
+}
+$$('.tab').forEach(b=>b.addEventListener('click',()=>show(b.dataset.tab,true)));
+
+/* ---------- Generic tick-box activity ---------- */
+function classify(host,cfg){
+  host.innerHTML='';
+  let total=0,answered=0,first=0;
+  const list=document.createElement('div');
+  cfg.rows.forEach(row=>{
+    if(row.heading){list.append(html('<div class="row-head">'+row.heading+'</div>'));return;}
+    total++;
+    const choices=row.choices||cfg.choices;
+    const wrap=html('<div class="crow"><div class="crow-q"></div><div class="opts" role="group"></div><div class="fb" aria-live="polite"></div></div>');
+    $('.crow-q',wrap).innerHTML=row.q;
+    const opts=$('.opts',wrap),fb=$('.fb',wrap);
+    if(cfg.split){opts.style.flexDirection='column';opts.style.alignItems='flex-start';}
+    let tries=0,solved=false,line=null;
+    choices.forEach((c,i)=>{
+      if(cfg.split&&cfg.split.includes(i)){line=html('<div class="opts"></div>');opts.append(line);}
+      else if(cfg.split&&!line){line=html('<div class="opts"></div>');opts.append(line);}
+      const b=html('<button type="button" class="opt"><span class="box" aria-hidden="true"></span><span></span></button>');
+      b.lastElementChild.innerHTML=c;
+      b.addEventListener('click',()=>{
+        if(solved)return;tries++;
+        if(i===row.a){
+          solved=true;b.classList.add('correct');
+          $$('.opt',wrap).forEach(o=>{o.disabled=true;if(o!==b&&!o.classList.contains('wrong'))o.classList.add('dim');});
+          fb.className='fb good';fb.innerHTML='<b>'+(tries===1?'Correct.':'Got it.')+'</b> '+(row.explain||'');
+          answered++;if(tries===1)first++;update();
+        }else{
+          b.classList.add('wrong');b.disabled=true;fb.className='fb bad';
+          fb.innerHTML='<b>Not quite.</b> '+(row.wrong?row.wrong(i):(row.hint||'Try another option.'));
+        }
+      });
+      (line||opts).append(b);
+    });
+    list.append(wrap);
+  });
+  const foot=html('<div class="scoreline"><span></span><button type="button" class="linkbtn">Start again</button></div>');
+  foot.lastElementChild.addEventListener('click',()=>classify(host,cfg));
+  host.append(list,foot);
+  function update(){
+    foot.firstElementChild.textContent=answered+' of '+total+' answered · '+first+' right first time';
+    if(answered===total){markDone(cfg.id);if(cfg.onDone)cfg.onDone();}
+  }
+  update();
+}
+function qf(q,opts,extra){
+  return '<div class="qform"><span class="qq">'+q+'</span>'+(opts?'<span class="cbs">'+opts.map(o=>'<span class="cb">'+o+'</span>').join('')+'</span>':'')+(extra||'')+'</div>';
+}
+
+/* ---------- 1. Survey basics ---------- */
+classify($('#act-stages .host'),{
+  id:'stages',choices:['Collecting data','Organizing &amp; presenting','Analyzing &amp; interpreting'],
+  rows:[
+    {q:'Send an online questionnaire to all S6 students.',a:0,explain:'Getting replies from people is data collection.'},
+    {q:'Put the replies into a frequency distribution table.',a:1,explain:'Tables organize the raw data.'},
+    {q:'Draw a bar chart of students’ favourite sports.',a:1,explain:'Charts present the data.'},
+    {q:'Find the mean and the median of the amounts spent.',a:2,explain:'Calculating measures is analysis.'},
+    {q:'Interview 50 shoppers outside a supermarket.',a:0,explain:'Interviews collect data.'},
+    {q:'Conclude that most students spend less than $400 on dinner each week.',a:2,explain:'Drawing a conclusion is interpretation.'}
+  ]
+});
+
+(function reportOrder(){
+  const host=$('#act-report .host');
+  const correct=['Objective and background','Research design and survey method','Research findings','Interpretation and conclusion'];
+  let items;
+  function init(){do{items=shuffle(correct);}while(items.every((x,i)=>x===correct[i]));render();}
+  function render(state){
+    host.innerHTML='';
+    const ol=html('<ol class="order"></ol>');
+    items.forEach((t,i)=>{
+      const li=html('<li><span class="pos">'+(i+1)+'</span><span class="t"></span><button type="button" class="mv" aria-label="Move up">↑</button><button type="button" class="mv" aria-label="Move down">↓</button></li>');
+      $('.t',li).textContent=t;
+      if(state)li.classList.add(t===correct[i]?'ok':'no');
+      const [up,dn]=$$('.mv',li);up.disabled=i===0;dn.disabled=i===items.length-1;
+      up.addEventListener('click',()=>{[items[i-1],items[i]]=[items[i],items[i-1]];render();focusBtn(i-1,0);});
+      dn.addEventListener('click',()=>{[items[i+1],items[i]]=[items[i],items[i+1]];render();focusBtn(i+1,1);});
+      ol.append(li);
+    });
+    const fb=html('<div class="fb" aria-live="polite"></div>');
+    const bar=html('<div style="display:flex;gap:10px;flex-wrap:wrap"><button type="button" class="btn">Check order</button><button type="button" class="btn ghost">Shuffle</button></div>');
+    bar.children[0].addEventListener('click',()=>{
+      const ok=items.every((x,i)=>x===correct[i]);
+      render(true);
+      const f=$('.fb',host);
+      if(ok){f.className='fb good';f.innerHTML='<b>Correct.</b> Start with <i>why</i> the survey was done, then <i>how</i> it was done, <i>what</i> was found, and finally <i>what it means</i>.';markDone('report');}
+      else{f.className='fb bad';f.innerHTML='<b>Not yet.</b> Red items are in the wrong place. Hint: a report first explains why the survey was done.';}
+    });
+    bar.children[1].addEventListener('click',init);
+    host.append(ol,bar,fb);
+  }
+  function focusBtn(i,which){const li=$$('.order li',host)[i];if(li){const b=$$('.mv',li)[which];(b.disabled?$$('.mv',li)[1-which]:b).focus();}}
+  init();
+})();
+
+/* ---------- 2. Questionnaires ---------- */
+(function dinnerLab(){
+  const host=$('#act-dinner .host');
+  const amt=['$0 – $199','$200 – $399','$400 – $599','$600 or above'];
+  const Q=[
+    {q:'1. Do you spend a large amount of money weekly?',o:['Yes','No','Not sure'],r:false,v:false,ex:'<b>Not reliable:</b> “a large amount” means different things to different students, so two students who spend the same could answer differently. <b>Not valid:</b> it asks about all spending, not spending on dinner.'},
+    {q:'2. How much do you spend on food weekly?',o:amt,r:true,v:false,ex:'<b>Reliable:</b> the money ranges are clear, so replies are consistent. <b>Not valid:</b> food includes breakfast and lunch, but the objective is about dinner only.'},
+    {q:'3. Do you think you spend a large amount of money on dinner weekly?',o:['Much above average','Above average','Average','Below average','Much below average'],r:false,v:true,ex:'<b>Not reliable:</b> “above average” is a personal judgement, the same problem as question 1. <b>Valid:</b> it asks about weekly dinner spending.'},
+    {q:'4. How much do you spend on dinner weekly?',o:amt,r:true,v:true,ex:'<b>Reliable and valid:</b> clear ranges, and it asks exactly what the objective needs. This is the most suitable question of the four.'}
+  ];
+  let solved=0;
+  Q.forEach((d,qi)=>{
+    const box=html('<div class="lab">'+qf(d.q,d.o)+'<div class="toggles"></div><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><button type="button" class="btn" disabled>Check</button></div><div class="fb" aria-live="polite"></div></div>');
+    const tg=$('.toggles',box),btn=$('.btn',box),fb=$('.fb',box);
+    const pick={r:null,v:null};let locked=false;
+    [['r','Reliable?'],['v','Valid?']].forEach(([k,label])=>{
+      const seg=html('<div class="seg" role="group"><span class="lbl">'+label+'</span></div>');
+      seg.setAttribute('aria-label',label);
+      [['Yes',true],['No',false]].forEach(([t,val])=>{
+        const b=html('<button type="button" class="opt"><span class="box" aria-hidden="true"></span><span>'+t+'</span></button>');
+        b.setAttribute('aria-pressed','false');
+        b.addEventListener('click',()=>{
+          if(locked)return;pick[k]=val;
+          $$('.opt',seg).forEach(o=>{o.classList.remove('picked','wrong');o.setAttribute('aria-pressed','false');});
+          b.classList.add('picked');b.setAttribute('aria-pressed','true');
+          btn.disabled=pick.r===null||pick.v===null;
+        });
+        seg.append(b);
+      });
+      tg.append(seg);
+    });
+    btn.addEventListener('click',()=>{
+      const okR=pick.r===d.r,okV=pick.v===d.v;
+      if(okR&&okV){
+        locked=true;btn.disabled=true;
+        $$('.opt.picked',tg).forEach(o=>{o.classList.remove('picked');o.classList.add('correct');});
+        $$('.opt',tg).forEach(o=>o.disabled=true);
+        fb.className='fb good';fb.innerHTML=d.ex;
+        const cell=$('#matrix [data-c="'+(d.r?1:0)+(d.v?1:0)+'"]');
+        $$('.chip.ghost',cell).forEach(c=>c.remove());
+        cell.append(html('<span class="chip">Q'+(qi+1)+'</span>'));
+        solved++;if(solved===Q.length)markDone('dinner');
+      }else{
+        const segs=$$('.seg',tg);
+        if(!okR)$('.opt.picked',segs[0]).classList.add('wrong');
+        if(!okV)$('.opt.picked',segs[1]).classList.add('wrong');
+        fb.className='fb bad';
+        fb.innerHTML='<b>Not quite.</b> '+(!okR&&!okV?'Both judgements need another look.':(!okR?'Look again at reliability: are there any subjective words?':'Look again at validity: does it ask exactly about weekly dinner spending?'));
+      }
+    });
+    host.append(box);
+  });
+  $$('#matrix .cell').forEach(c=>c.append(html('<span class="chip ghost">?</span>')));
+})();
+
+(function principles(){
+  const P=[
+    {n:'Use clear wording',poor:qf('Do you go to tutorial classes?',['Yes','No']),better:qf('Did you attend any tutorial classes outside school in the past month?',['Yes','No']),why:'“Go to tutorial classes” could mean ever, now, or for any subject, so a “Yes” can mean different things.'},
+    {n:'Provide all possible answers',poor:qf('How do you usually travel to school?',['MTR','Bus']),better:qf('How do you usually travel to school?',['MTR','Bus','Minibus','On foot','Others (please specify: ______ )']),why:'The options must cover every case. Sometimes add “Not applicable” or “No opinion”.'},
+    {n:'Make options mutually exclusive',poor:qf('What do you usually order for lunch?',['Rice dishes','Noodles','Fried rice','Others (please specify: ______ )']),better:qf('What do you usually order for lunch?',['Rice dishes','Noodles','Sandwiches','Others (please specify: ______ )']),why:'Fried rice is a rice dish, so some students could tick two options.'},
+    {n:'Use symmetrical options with a neutral option',poor:qf('How do you rate the school canteen?',['Excellent','Very good','Good','Poor']),better:qf('How do you rate the school canteen?',['Very good','Good','Average','Poor','Very poor']),why:'Three positive options and one negative option push the replies towards positive. Balance them around a neutral middle.'},
+    {n:'Avoid leading questions',poor:qf('Doctors say using screens late at night harms your sleep. How many hours do you use screens after 11 p.m.?',['0','Less than 1','1 to less than 2','2 or more']),better:qf('How many hours do you use screens after 11 p.m.?',['0','Less than 1','1 to less than 2','2 or more']),why:'The first sentence may influence people to reply in a certain way (here, to under-report).'},
+    {n:'Avoid composite questions',poor:qf('Are you satisfied with the school Wi-Fi speed and the computer room opening hours?',['Yes','No','No opinion']),better:qf('1. Are you satisfied with the school Wi-Fi speed?',['Yes','No','No opinion'])+qf('2. Are you satisfied with the computer room opening hours?',['Yes','No','No opinion']),why:'Someone happy with one but not the other cannot answer. Split it into single questions.'}
+  ];
+  const host=$('#principles');
+  P.forEach((p,i)=>{
+    const c=html('<div class="pcard"><span class="pn">Principle '+(i+1)+'</span><h3></h3><span class="tag poor">Poor</span><div class="slot"></div><p class="why" hidden></p><button type="button" class="btn ghost" style="align-self:flex-start">Show better version</button></div>');
+    $('h3',c).textContent=p.n;
+    const slot=$('.slot',c),tag=$('.tag',c),why=$('.why',c),b=$('.btn',c);
+    slot.innerHTML=p.poor;why.textContent=p.why;
+    let better=false;
+    b.addEventListener('click',()=>{
+      better=!better;slot.innerHTML=better?p.better:p.poor;
+      tag.textContent=better?'Better':'Poor';tag.className='tag '+(better?'better':'poor');
+      why.hidden=!better;b.textContent=better?'Show poor version':'Show better version';
+    });
+    host.append(c);
+  });
+})();
+
+classify($('#act-flaw .host'),{
+  id:'flaw',choices:['Unclear wording','Missing options','Overlapping options','Unbalanced options','Leading question','Composite question'],
+  rows:[
+    {q:qf('Do you agree that the canteen should serve healthier food and lower its prices?',['Agree','Disagree','No opinion']),a:5,explain:'It asks two things at once. Someone may want healthier food but not lower prices.'},
+    {q:qf('Our new library is much more comfortable than the old one. How often do you visit it?',['Never','Once a month','Once a week','Every day']),a:4,explain:'The first sentence pushes people to think positively about the library.'},
+    {q:qf('How old are you?',['12 – 14','14 – 16','16 – 18']),a:2,explain:'A 14-year-old or a 16-year-old could tick two boxes.'},
+    {q:qf('How would you rate the new school uniform?',['Excellent','Very good','Good','Poor']),a:3,explain:'Three positive options, one negative option, and no neutral option.'},
+    {q:qf('Which video platform do you use most?',['YouTube','Netflix']),a:1,explain:'Many other platforms exist. Add more options and “Others (please specify)”.'},
+    {q:qf('Do you play games regularly?',['Yes','No']),a:0,explain:'“Games” (video games? sports?) and “regularly” are both unclear.'}
+  ]
+});
+
+classify($('#act-library .host'),{
+  id:'library',choices:['Reliable and valid','Not reliable','Not valid'],
+  rows:[
+    {q:'(a) '+qf('Do you think you read a lot?',['Yes','No']),a:1,explain:'“A lot” is subjective. <b>Improve:</b> “How many books did you read in the past month?” with options 0 / 1–2 / 3–4 / 5 or more.'},
+    {q:'(b) '+qf('Which kind of book do you borrow most often?',['Novels','Comics','Reference books','Others (please specify: ______ )']),a:0,explain:'Clear wording, and “Others” covers every remaining case.'},
+    {q:'(c) '+qf('How many hours do you spend in the library each week?',['0 – 2','2 – 4','4 – 6','6 or more']),a:2,explain:'The options overlap: a student who spends exactly 2 hours could tick two boxes. <b>Improve:</b> less than 2 / 2 to less than 4 / 4 to less than 6 / 6 or more.'},
+    {q:'(d) '+qf('What do you usually do in the library?',['Study','Read']),a:2,explain:'The options do not cover all cases. <b>Improve:</b> add “Use the computers”, “Meet friends” and “Others (please specify)”.'}
+  ]
+});
+
+/* ---------- 3. Population & sample ---------- */
+(function popDiagram(){
+  const svg=$('#popsvg');
+  let s='';
+  s+='<defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--muted)"/></marker></defs>';
+  s+='<rect x="20" y="30" width="200" height="150" rx="10" style="fill:var(--surface);stroke:var(--ink);stroke-width:1.5"/>';
+  s+='<text x="120" y="22" text-anchor="middle" font-weight="700" font-size="15">Population</text>';
+  const picked=[2,9,13,20,26,31];
+  let k=0;
+  for(let r=0;r<5;r++)for(let c=0;c<7;c++){const x=42+c*26,y=56+r*26;const on=picked.includes(k);s+='<circle cx="'+x+'" cy="'+y+'" r="8" style="fill:'+(on?'var(--accent)':'var(--line)')+'"/>';k++;}
+  s+='<line x1="228" y1="105" x2="300" y2="105" style="stroke:var(--muted);stroke-width:2" marker-end="url(#ah)"/>';
+  s+='<text x="264" y="95" text-anchor="middle" font-size="13">Sampling</text>';
+  s+='<rect x="308" y="60" width="130" height="90" rx="10" style="fill:var(--surface);stroke:var(--ink);stroke-width:1.5"/>';
+  s+='<text x="373" y="52" text-anchor="middle" font-weight="700" font-size="15">Sample</text>';
+  for(let i=0;i<6;i++){const x=336+(i%3)*37,y=88+Math.floor(i/3)*34;s+='<circle cx="'+x+'" cy="'+y+'" r="9" style="fill:var(--accent)"/>';}
+  s+='<line x1="446" y1="105" x2="508" y2="105" style="stroke:var(--muted);stroke-width:2" marker-end="url(#ah)"/>';
+  s+='<rect x="516" y="56" width="148" height="98" rx="10" style="fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5"/>';
+  s+='<text x="590" y="48" text-anchor="middle" font-weight="700" font-size="15">Statistical results</text>';
+  const bh=[30,52,40,64];bh.forEach((h,i)=>{s+='<rect x="'+(546+i*24)+'" y="'+(140-h)+'" width="16" height="'+h+'" rx="2" style="fill:var(--accent)"/>';});
+  s+='<text x="590" y="175" text-anchor="middle" font-size="12.5">analysis &amp; interpretation</text>';
+  s+='<path d="M590,186 C590,236 120,236 120,190" style="fill:none;stroke:var(--accent);stroke-width:2;stroke-dasharray:6 5" marker-end="url(#ah)"/>';
+  s+='<text x="355" y="242" text-anchor="middle" font-weight="700" font-size="13" style="fill:var(--accent)">Making inferences about the population</text>';
+  s+='<text x="120" y="200" text-anchor="middle" font-size="12">Census = data from every unit</text>';
+  svg.innerHTML=s;
+})();
+
+classify($('#act-popsample .host'),{
+  id:'popsample',
+  rows:[
+    {heading:'<b>Survey 1.</b> To check the battery life of the 5000 phone batteries made in a factory today, an engineer randomly tests 40 of them.'},
+    {q:'The population is…',choices:['all batteries the factory has ever made','the 5000 batteries made today','the 40 batteries tested','the engineer'],a:1,explain:'The engineer wants to know about today’s 5000 batteries.'},
+    {q:'The sample is…',choices:['the 5000 batteries made today','the 40 batteries tested','batteries with long battery life','all phone batteries in Hong Kong'],a:1,explain:'Only the 40 tested batteries give data. Testing battery life also uses up the battery, which is one reason not to test all of them.'},
+    {heading:'<b>Survey 2.</b> A teacher wants to know the daily screen time of the S4 students in her school. She asks all 32 students in class 4A.'},
+    {q:'The population is…',choices:['all students in the school','all S4 students in the school','the 32 students in 4A','all students the teacher teaches'],a:1,explain:'The objective is about every S4 student in the school.'},
+    {q:'The sample is…',choices:['all S4 students in the school','classes 4A and 4B','the 32 students in 4A','students with long screen time'],a:2,explain:'The 32 students of 4A. Since only one class is asked, the sample may not represent all S4 students.'},
+    {heading:'<b>Survey 3.</b> A bubble tea shop wants to know its customers’ opinion of a new flavour. On Saturday, it asks 100 customers who buy the new flavour.'},
+    {q:'The population is…',choices:['all customers of the shop','the 100 customers asked','all Hong Kong people','customers who like bubble tea'],a:0,explain:'The shop wants the opinion of all its customers.'},
+    {q:'The sample is…',choices:['all customers of the shop','the 100 customers asked on Saturday','everyone who visits on Saturday','all customers who buy the new flavour'],a:1,explain:'The 100 customers asked. They already chose to buy the new flavour, so they probably like it more than other customers do: a biased sample (see tab 5).'}
+  ]
+});
+
+classify($('#act-census .host'),{
+  id:'census',choices:['Census','Sample survey'],
+  rows:[
+    {q:'The class monitor asks all 30 classmates which day suits them for a class picnic.',a:0,explain:'The population is the class, and every classmate is asked.'},
+    {q:'A juice factory opens 20 bottles from a batch of 10 000 to test the sugar level.',a:1,explain:'Only 20 of the 10 000 bottles are tested.'},
+    {q:'A club chairperson asks all 25 members to vote on the venue of the annual dinner.',a:0,explain:'Every member of the club is asked.'},
+    {q:'A TV station phones 1000 citizens to ask their view on a new MTR line.',a:1,explain:'1000 citizens is only part of the population of Hong Kong.'},
+    {q:'To find the average height of the S1 students in a school, the PE teacher measures every S1 student.',a:0,explain:'Data is collected from every unit in the population (all S1 students).'}
+  ]
+});
+
+/* ---------- 4. Sampling simulator ---------- */
+(function sim(){
+  function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+  const rng=mulberry32(2023);
+  const N=1000,n=50;
+  const g=[];for(let i=0;i<N;i++)g.push(i<600?'M':'F');
+  for(let i=N-1;i>0;i--){const j=Math.floor(rng()*(i+1));[g[i],g[j]]=[g[j],g[i]];}
+  const grid=$('#simGrid');const cells=[];const frag=document.createDocumentFragment();
+  for(let i=0;i<N;i++){const c=document.createElement('span');c.className='px '+(g[i]==='M'?'m':'f');c.title='Customer '+(i+1)+' ('+(g[i]==='M'?'male':'female')+')';cells.push(c);frag.append(c);}
+  grid.append(frag);
+  const males=[],females=[];g.forEach((x,i)=>(x==='M'?males:females).push(i));
+  const STEPS={
+    simple:['Give every customer a unique number from 1 to 1000.','Select 50 different numbers at random.','The customers with those numbers form the sample. Every customer has an equal chance of being chosen.'],
+    systematic:['Find the interval: k = 1000 ÷ 50 = 20.','Divide the customers into 50 groups of 20 (each row below holds two groups) and number each group 1 to 20.','Select one number from 1 to 20 at random, say r.','Choose customer r in every group: r, r + 20, r + 40, …'],
+    stratified:['Divide the customers into two strata: A = 600 males, B = 400 females.','Keep the same proportions in the sample: 50 × 600/1000 = 30 males and 50 × 400/1000 = 20 females.','Select 30 males at random from stratum A and 20 females at random from stratum B.']
+  };
+  const CAP={simple:'Customers 1–1000, numbered left to right, 40 per row.',systematic:'Customers 1–1000, 40 per row, so each row is two groups of 20.',stratified:'Customers rearranged by stratum: rows 1–15 are the 600 males (stratum A), rows 16–25 are the 400 females (stratum B).'};
+  const hist={simple:[],systematic:[],stratified:[]};const ran=new Set();
+  let method='simple',timers=[];
+  function pickK(arr,k){const a=arr.slice();for(let i=0;i<k;i++){const j=i+Math.floor(Math.random()*(a.length-i));[a[i],a[j]]=[a[j],a[i]];}return a.slice(0,k);}
+  function clear(){timers.forEach(clearTimeout);timers=[];cells.forEach(c=>c.classList.remove('sel'));}
+  function setMethod(m){
+    method=m;clear();
+    $$('#act-sim .mbtn').forEach(b=>b.setAttribute('aria-pressed',b.dataset.m===m?'true':'false'));
+    $('#simSteps').innerHTML=STEPS[m].map(s=>'<li>'+s+'</li>').join('');
+    $('#simCaption').textContent=CAP[m];
+    if(m==='stratified'){males.forEach((idx,p)=>cells[idx].style.order=p);females.forEach((idx,p)=>cells[idx].style.order=600+p);}
+    else cells.forEach((c,i)=>c.style.order=i);
+    $('#simNow').textContent='—';$('#simPicks').textContent='Press “Select 50 customers”.';
+  }
+  function run(){
+    clear();let picks,note='';
+    if(method==='simple')picks=pickK([...Array(N).keys()],n);
+    else if(method==='systematic'){const r=1+Math.floor(Math.random()*20);picks=[];for(let j=0;j<n;j++)picks.push(r-1+20*j);note='Random start r = '+r+'. ';}
+    else picks=pickK(males,30).concat(pickK(females,20));
+    const m=picks.filter(i=>g[i]==='M').length;
+    $('#simNow').textContent='Male '+m+' · Female '+(n-m);
+    const nums=picks.map(i=>i+1).sort((a,b)=>a-b);
+    $('#simPicks').textContent=note+'Customers: '+nums.join(', ');
+    picks.forEach((idx,k)=>{if(reduce)cells[idx].classList.add('sel');else timers.push(setTimeout(()=>cells[idx].classList.add('sel'),k*18));});
+    hist[method].push(m);if(hist[method].length>8)hist[method].shift();
+    const h=$('#h-'+method);h.innerHTML=hist[method].map(x=>'<span>'+x+'</span>').join('');
+    ran.add(method);if(ran.size===3)markDone('sim');
+  }
+  $$('#act-sim .mbtn').forEach(b=>b.addEventListener('click',()=>setMethod(b.dataset.m)));
+  $('#simRun').addEventListener('click',run);
+  setMethod('simple');
+})();
+
+(function(){
+  const fam=i=>i<3?'non':'pro';
+  const choices=['Convenience','Judgemental','Snowball','Simple random','Systematic random','Stratified random'];
+  const rows=[
+    {q:'A reporter interviews the first 30 people leaving an MTR station.',a:0,explain:'Non-probability: the people who are easiest to reach are chosen.'},
+    {q:'Every student in a school has a student number. A computer randomly generates 80 numbers, and those students are surveyed.',a:3,explain:'Probability: every student has an equal chance of being chosen.'},
+    {q:'To study the safety habits of hikers, a researcher interviews a few hikers, then asks each of them to introduce hiking friends for interview.',a:2,explain:'Non-probability: the sample grows through referrals.'},
+    {q:'From a list of 2000 club members sorted by membership number, a random number r from 1 to 40 is chosen, then members r, r + 40, r + 80, … are selected.',a:4,explain:'Probability: one unit is chosen at a regular interval (k = 40).'},
+    {q:'A school has 400 junior form students and 600 senior form students. 20 juniors and 30 seniors are chosen at random.',a:5,explain:'Probability: the population is split into groups (strata) and units are chosen randomly from each.'},
+    {q:'To study opinions on a new medical treatment, a researcher interviews the five doctors she believes are the most experienced.',a:1,explain:'Non-probability: the researcher’s own judgement decides who is chosen.'}
+  ].map(r=>Object.assign(r,{wrong:i=>fam(i)===fam(r.a)?'Right type of sampling ('+(fam(r.a)==='non'?'non-probability':'probability')+'), but a different method.':'Wrong type. Ask: does every unit have a known, non-zero chance of being chosen?'}));
+  classify($('#act-classify .host'),{id:'classify',choices,rows,split:[0,3]});
+})();
+
+/* ---------- 5. Abuses ---------- */
+function bars(host,data,unit,alt){
+  const max=Math.max(...data.map(d=>d[1]));
+  host.innerHTML=data.map((d,i)=>'<div class="bar"><span>'+d[0]+'</span><div class="track"><div class="fill'+(i===1?' alt':'')+'" style="width:'+(d[1]/max*100)+'%">'+d[1]+unit+'</div></div></div>').join('');
+}
+bars($('#barsA'),[['Japanese',26],['Korean',30]],'');
+bars($('#barsJ'),[['Japanese',14],['Korean',10]],' h');
+classify($('#act-drama .host'),{
+  id:'drama',choices:['Anson’s','Jessica’s'],
+  rows:[{q:'Whose questionnaire is more valid for measuring popularity?',a:1,
+    explain:'Anson’s Yes/No questions only record <i>whether</i> a student watched, so someone who watched for five minutes counts the same as someone who watched all weekend. Jessica’s questions measure <i>how much</i> each drama was watched, which fits the objective better. Anson’s weaker design leads him to the wrong conclusion. The design of the questions affects the conclusion of a survey.',
+    hint:'Think about a student who watched 5 minutes of Korean drama and 6 hours of Japanese drama. How does each questionnaire record them?'}]
+});
+
+(function pct(){
+  const a=$('#popA'),b=$('#popB');let flipped=false;
+  function upd(){
+    const A=+a.value,B=+b.value,ia=A*0.10,ib=B*0.07;
+    $('#popAo').textContent=fmt(A);$('#popBo').textContent=fmt(B);
+    $('#pctWork').innerHTML='District A: '+fmt(A)+' × 10% = <b>'+fmt(ia)+'</b> people<br>District B: '+fmt(B)+' × 7% = <b>'+fmt(ib)+'</b> people';
+    const v=$('#pctVerdict');
+    if(ia>ib){v.className='verdict t';v.textContent='With these populations the claim is true.';}
+    else if(ia<ib){v.className='verdict f';v.textContent='With these populations the claim is false: District B has more cases even though its percentage is lower.';if(!flipped){flipped=true;markDone('percent');}}
+    else{v.className='verdict';v.textContent='Both districts have the same number of cases.';}
+  }
+  a.addEventListener('input',upd);b.addEventListener('input',upd);upd();
+})();
+
+(function bundle(){
+  const ids=['c1','p1','c2','p2'];
+  function upd(){
+    const [c1,p1,c2,p2]=ids.map(i=>parseFloat($('#'+i).value));
+    if([c1,p1,c2,p2].some(x=>isNaN(x))||c1<=0||c2<=0){$('#bNaive').textContent='—';$('#bWork').textContent='Enter a positive cost and a percentage for both items.';return;}
+    const naive=(p1+p2)/2,newT=c1*(1+p1/100)+c2*(1+p2/100),old=c1+c2,act=(newT-old)/old*100;
+    $('#bNaive').textContent='('+p1+'% + '+p2+'%) ÷ 2 = '+r2(naive)+'%';
+    $('#bWork').innerHTML='= [ '+c1+'(1 + '+p1+'%) + '+c2+'(1 + '+p2+'%) − ('+c1+' + '+c2+') ] ÷ ('+c1+' + '+c2+') × 100%<br>= ('+r2(newT)+' − '+r2(old)+') ÷ '+r2(old)+' × 100%<br>= <b>'+r2(act)+'%</b>';
+  }
+  ids.forEach(i=>$('#'+i).addEventListener('input',upd));upd();
+})();
+
+(function points(){
+  const a=$('#r1'),b=$('#r2');
+  function upd(){
+    const x=+a.value,y=+b.value,d=y-x,pc=d/x*100;
+    $('#r1o').textContent=x+'%';$('#r2o').textContent=y+'%';
+    const word=d>=0?'increase':'decrease';
+    $('#ptWork1').innerHTML='Difference: '+y+'% − '+x+'% = <b>'+Math.abs(d)+' percentage points</b>';
+    $('#ptWork2').innerHTML='Percentage '+word+': ('+y+'% − '+x+'%) ÷ '+x+'% × 100% = <b>'+r2(Math.abs(pc))+'%</b>';
+  }
+  a.addEventListener('input',upd);b.addEventListener('input',upd);upd();
+})();
+
+(function causal(){
+  const data=[['0–1',8],['1–2',12],['2–3',17],['3–4',23],['over 4',30]];
+  const W=520,H=260,L=48,R=12,T=16,B=52,max=35,pw=W-L-R,ph=H-T-B;
+  let s='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Bar chart: the percentage of overweight children rises from 8% to 30% as daily gaming time rises from 0-1 hours to over 4 hours. Illustrative data.">';
+  [0,10,20,30].forEach(v=>{const y=T+ph-v/max*ph;s+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+y+'" y2="'+y+'" style="stroke:var(--line);stroke-width:1"/><text x="'+(L-8)+'" y="'+(y+4)+'" text-anchor="end">'+v+'%</text>';});
+  const bw=pw/data.length;
+  data.forEach((d,i)=>{const h=d[1]/max*ph,x=L+i*bw+bw*0.2,y=T+ph-h;s+='<rect x="'+x+'" y="'+y+'" width="'+(bw*0.6)+'" height="'+h+'" rx="3" style="fill:var(--abuse)"/><text x="'+(x+bw*0.3)+'" y="'+(y-5)+'" text-anchor="middle" style="fill:var(--ink)">'+d[1]+'%</text><text x="'+(x+bw*0.3)+'" y="'+(T+ph+18)+'" text-anchor="middle">'+d[0]+'</text>';});
+  s+='<text x="'+(L+pw/2)+'" y="'+(H-8)+'" text-anchor="middle">Hours spent on computer games per day (illustrative data)</text>';
+  s+='<text transform="translate(12,'+(T+ph/2)+') rotate(-90)" text-anchor="middle">% overweight</text></svg>';
+  $('#gameChart').innerHTML=s;
+  const V=[
+    '<div class="causal"><span class="node">Much time on computer games</span><span class="arr">→</span><span class="node">Being overweight</span></div><p style="margin-top:8px">The researcher’s theory: gaming means less activity, so children put on weight. It explains the graph, but it is not the only theory that does.</p>',
+    '<div class="causal"><span class="node">Being overweight</span><span class="arr">→</span><span class="node">Less likely to exercise outdoors</span><span class="arr">→</span><span class="node">More time on computer games at home</span></div><p style="margin-top:8px">The cause could run the other way. This theory also explains the graph.</p>',
+    '<div class="causal"><span class="node c">Common cause, e.g. the level of a certain hormone</span><span class="arr">→</span><span style="display:flex;flex-direction:column;gap:8px"><span class="node">Being overweight</span><span class="node">Much time on computer games</span></span></div><p style="margin-top:8px">A third factor could cause both, so neither causes the other. This theory also explains the graph.</p>'
+  ];
+  const btns=$$('#act-causal .mbtn');
+  function set(i){btns.forEach(b=>b.setAttribute('aria-pressed',b.dataset.c==i?'true':'false'));$('#causalView').innerHTML=V[i];}
+  btns.forEach(b=>b.addEventListener('click',()=>set(+b.dataset.c)));set(0);
+  classify($('#act-causal .host'),{
+    id:'causal',choices:['A causes B','B causes A','A common cause'],
+    rows:[
+      {q:'Your turn. In a city, the number of ice-cream cones sold (A) and the number of drowning cases (B) rise and fall together. Which explanation is most likely?',a:2,explain:'Hot weather makes people buy ice-cream <i>and</i> go swimming. Ice-cream does not cause drowning.'},
+      {q:'Cities with more hospitals (A) record more deaths each year (B). Which explanation is most likely?',a:2,explain:'A larger population leads to both more hospitals and more deaths. Hospitals do not cause deaths.'}
+    ]
+  });
+})();
+
+/* ---------- 6. Practice ---------- */
+(function quiz(){
+  const Q=[
+    {q:'Which of the following is a census?',o:['A school asks every S6 student in the school to fill in a subject-choice form.','A newspaper interviews 200 readers about its new layout.','A food inspector tests 10 cans from each batch.','A reporter asks people in a shopping mall about their weekend plans.'],a:0,e:'The population is all S6 students in the school, and every one of them is asked.'},
+    {q:'“Don’t you agree that students have too much homework?” Which principle does this question break?',o:['Use clear wording','Avoid leading questions','Avoid composite questions','Provide options that are mutually exclusive'],a:1,e:'The wording pushes respondents to agree.'},
+    {q:'To estimate the mean weight of 2000 apples in a shipment, 50 apples are randomly selected and weighed. The sample is',o:['the 2000 apples in the shipment.','the 50 apples weighed.','the mean weight of the 50 apples.','all apples sold in Hong Kong.'],a:1,e:'The sample is the units data is collected from: the 50 apples.'},
+    {q:'A car maker checks that the airbags in its cars open properly. Why does it NOT test every airbag?',o:['The population is too small.','Testing an airbag destroys it.','Airbags are hard to find.','Probability sampling cannot be used.'],a:1,e:'A tested airbag cannot be used again, just like an opened can of food.'},
+    {q:'Which of the following is a probability sampling method?',o:['Interview the first 30 customers who enter a shop.','Ask your friends, and their friends, to fill in a questionnaire.','Choose a random number r from 1 to 10, then select the r-th, (r + 10)-th, (r + 20)-th, … students on a class list.','Choose the students that the teacher thinks are the most hard-working.'],a:2,e:'This is systematic random sampling: every student has a known, non-zero chance of being chosen.'},
+    {q:'A school has 300 junior form and 200 senior form students. A stratified random sample of 50 students is chosen in proportion to the sizes of the two groups. How many senior form students are chosen?',o:['10','20','25','30'],a:1,e:'50 × 200/500 = 20.'},
+    {q:'In systematic random sampling, a sample of 60 is selected from 1200 customers. What is the interval k?',o:['12','20','60','120'],a:1,e:'k = 1200 ÷ 60 = 20.'},
+    {q:'A radio station invites listeners to phone in and vote on a new law. Why may the result not represent all citizens?',o:['The sample is too large.','People with strong opinions are more likely to phone in.','The question is a composite question.','A census must always be used.'],a:1,e:'This is self-selection: the sample is not representative, so the result is biased.'},
+    {q:'The percentage of students who wear glasses rose from 20% to 25%. Which statement is correct?',o:['It increased by 5%.','It increased by 25%.','It increased by 20%.','It increased by 125%.'],a:1,e:'(25% − 20%) ÷ 20% × 100% = 25%. The difference of 5 is in percentage points.'},
+    {q:'A study finds that students who eat breakfast tend to get higher test scores. Which comment is the most appropriate?',o:['Eating breakfast causes higher test scores.','Higher test scores cause students to eat breakfast.','The two are related, but we cannot conclude that one causes the other without further study.','There is no relationship between them.'],a:2,e:'A relationship alone does not prove causality. There may be a common cause, such as family routine.'},
+    {q:'What is wrong with the options “☐ 0–10  ☐ 10–20  ☐ 20–30  ☐ 30 or more”?',o:['They are not mutually exclusive.','They are not symmetrical.','They form a leading question.','They form a composite question.'],a:0,e:'10, 20 and 30 each belong to two options.'},
+    {q:'Which of the following is a disadvantage of systematic random sampling?',o:['It cannot reach rare cases.','It is not suitable if the units are arranged in a certain order.','It is not objective.','Some units have no chance of being selected.'],a:1,e:'If the list has a repeating pattern, the regular interval may keep picking the same kind of unit.'}
+  ];
+  const host=$('#act-quiz .host');
+  let order,i,score,answered;
+  function start(){order=Q.map((_,k)=>k);i=0;score=0;render();}
+  function render(){
+    host.innerHTML='';
+    if(i>=order.length){
+      const best=store.get('ch23-quiz-best',0);if(score>best)store.set('ch23-quiz-best',score);
+      const msg=score===Q.length?'Full marks.':score>=9?'Well done.':score>=6?'Good effort. Review the tabs for the ones you missed.':'Go back through tabs 2–5, then try again.';
+      const end=html('<div class="qcard"><p class="muted">Your score</p><p class="end mono">'+score+' / '+Q.length+'</p><p>'+msg+'</p><p class="muted" style="font-size:.88rem">Best score on this device: '+Math.max(score,best)+' / '+Q.length+'</p><div><button type="button" class="btn">Try again</button></div></div>');
+      $('.btn',end).addEventListener('click',start);host.append(end);markDone('quiz');return;
+    }
+    const d=Q[order[i]];answered=false;
+    const card=html('<div class="qcard"><div class="qmeta"><span>Question '+(i+1)+' of '+Q.length+'</span><span>Score '+score+'</span></div><div class="qbar"><div style="width:'+(i/Q.length*100)+'%"></div></div><p class="qtext"></p><div class="opts col" role="group"></div><div class="fb" aria-live="polite"></div><div><button type="button" class="btn" disabled>Next question</button></div></div>');
+    $('.qtext',card).textContent=d.q;
+    const opts=$('.opts',card),fb=$('.fb',card),next=$('.btn',card);
+    d.o.forEach((t,k)=>{
+      const b=html('<button type="button" class="opt"><span class="box" aria-hidden="true"></span><span></span></button>');
+      b.lastElementChild.textContent=t;
+      b.addEventListener('click',()=>{
+        if(answered)return;answered=true;
+        const ok=k===d.a;if(ok)score++;
+        $$('.opt',opts).forEach((o,m)=>{o.disabled=true;if(m===d.a)o.classList.add('correct');else if(m===k)o.classList.add('wrong');else o.classList.add('dim');});
+        fb.className='fb '+(ok?'good':'bad');fb.innerHTML='<b>'+(ok?'Correct.':'Not quite.')+'</b> '+d.e;
+        $('.qmeta span:last-child',card).textContent='Score '+score;
+        next.disabled=false;next.textContent=i===Q.length-1?'See my score':'Next question';next.focus();
+      });
+      opts.append(b);
+    });
+    next.addEventListener('click',()=>{i++;render();});
+    host.append(card);
+  }
+  start();
+})();
+
+(function written(){
+  const W=[
+    {q:'A fitness centre wants to know its members’ opinions on its facilities. It gives questionnaires to the members attending the 7 a.m. yoga class.',parts:['(a) Is the sample representative? Explain your answer.','(b) Suggest a more appropriate sampling method.'],
+     a:'<p>(a) No. Only members who attend the early yoga class are asked. Members who use other facilities (such as the gym or the pool) or come at other times are left out, so their opinions are ignored. The sample is not representative.</p><p>(b) Randomly select members from the full membership list (for example, by membership number) to fill in the questionnaire. (Other reasonable answers accepted.)</p>'},
+    {q:'To find out the reading habits of Hong Kong citizens, an organisation interviewed 500 visitors at the Hong Kong Book Fair. 425 of them said they read at least one book a month. The organisation claims that 85% of Hong Kong citizens read at least one book a month.',parts:['(a) What type of sampling (non-probability or probability) was used?','(b) Describe the population and the sample of the survey.','(c) Explain how the claim may mislead the reader.'],
+     a:'<p>(a) Non-probability sampling.</p><p>(b) The population is all Hong Kong citizens. The sample is the 500 visitors interviewed at the Book Fair.</p><p>(c) Data was only collected from visitors to a book fair, who are more likely to enjoy reading than other citizens. Their replies may not reflect all Hong Kong citizens, so the sample is not representative and 85% probably overstates the true proportion.</p>'},
+    {q:'A phone costs $4000 and a phone case costs $200. This year, the price of the phone rises by 5% and the price of the case rises by 50%. The shop claims that the price of the set rises by 27.5%.',parts:['(a) How did the shop obtain 27.5%?','(b) Find the actual percentage increase in the price of the set, correct to 3 significant figures.'],
+     a:'<p>(a) It took the average of the two percentage increases: (5% + 50%) ÷ 2 = 27.5%. This ignores the very different prices of the two items.</p><p class="work">(b) Percentage increase = [4000(1 + 5%) + 200(1 + 50%) − (4000 + 200)] ÷ (4000 + 200) × 100%<br>= (4500 − 4200) ÷ 4200 × 100%<br>= 7.14% (cor. to 3 sig. fig.)</p>'},
+    {q:'The passing rate of a club’s fitness test rose from 40% last year to 50% this year. Mandy says the passing rate increased by 10%. Ken says it increased by 25%. Comment on their claims.',parts:[],
+     a:'<p class="work">Percentage increase = (50% − 40%) ÷ 40% × 100% = 25%</p><p>Mandy subtracted the two rates. The rate rose by 10 percentage points, not by 10%, so Mandy’s claim is not correct. Ken’s claim is correct.</p>'}
+  ];
+  const host=$('#act-written .host');const seen=new Set();
+  W.forEach((w,k)=>{
+    const id='w'+(k+1);
+    const box=html('<div class="wq"><p><b>'+(k+1)+'.</b> <span class="qt"></span></p><div class="parts"></div><label class="muted" for="'+id+'" style="font-size:.88rem">Your answer</label><textarea id="'+id+'"></textarea><div><button type="button" class="btn ghost">Show suggested answer</button></div><div class="model" hidden></div></div>');
+    $('.qt',box).textContent=w.q;
+    $('.parts',box).innerHTML=w.parts.map(p=>'<p>'+p+'</p>').join('');
+    const ta=$('textarea',box);ta.value=store.get('ch23-'+id,'');
+    ta.addEventListener('input',()=>store.set('ch23-'+id,ta.value));
+    const m=$('.model',box);m.innerHTML='<span class="panel-label" style="color:var(--good)">Suggested answer</span>'+w.a;
+    const b=$('.btn',box);
+    b.addEventListener('click',()=>{m.hidden=!m.hidden;b.textContent=m.hidden?'Show suggested answer':'Hide suggested answer';if(!m.hidden){seen.add(k);if(seen.size===W.length)markDone('written');}});
+    host.append(box);
+  });
+})();
+
+/* ---------- Glossary ---------- */
+$('#gloss').innerHTML=[
+  ['Statistical survey','統計調查','Collecting data to find out about a group'],
+  ['Questionnaire','問卷','A set of questions used to collect data'],
+  ['Reliability','可靠性','Replies are consistent'],
+  ['Validity','有效性','The question measures what the objective needs'],
+  ['Leading question','誘導性問題','Wording that pushes people towards an answer'],
+  ['Population','總體','The whole group being studied'],
+  ['Census','普查','Data from every unit in the population'],
+  ['Sample','樣本','The units selected from the population'],
+  ['Sample survey','抽樣調查','Data from some units only'],
+  ['Probability sampling','概率抽樣','Every unit has a known, non-zero chance'],
+  ['Non-probability sampling','非概率抽樣','Not every unit has a known chance'],
+  ['Simple random sampling','簡單隨機抽樣','Every unit has an equal chance'],
+  ['Systematic random sampling','系統隨機抽樣','Random start, then every k-th unit'],
+  ['Stratified random sampling','分層隨機抽樣','Random selection within each group (stratum)'],
+  ['Abuses of statistics','統計的誤用','Misleading use of survey results'],
+  ['Causality','因果關係','One thing directly causing another']
+].map(r=>'<tr><td><b>'+r[0]+'</b></td><td class="zh">'+r[1]+'</td><td>'+r[2]+'</td></tr>').join('');
+
+/* ---------- Boot ---------- */
+renderProgress();
+const h=(location.hash||'').replace('#','');
+show(TABS.includes(h)?h:store.get('ch23-tab','survey'),false);
+})();
+</script>
